@@ -1,0 +1,17 @@
+{
+  "name": "webapp-to-desktop",
+  "version": "1.0.0",
+  "description": "Electron desktop app converted from web app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "M.K.F LTD",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^32.3.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {},
+  "keywords": []
+}

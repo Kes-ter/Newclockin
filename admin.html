@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/buttonstyles.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+</head>
+<header>
+    <div class="header jumbotron">
+        <div>
+            <img class="logo" src="/static/logo.png" alt="Logo">
+            <h1 class="display-4">GNPC ADMIN LOG IN</h1>
+            <div class="box-2">
+                <div style="text-align: right;">
+                    <button class="btn btn-two" onclick="window.location.href='index.html'">Clock-In Page</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<body>
+    <div class="fillin">
+        <div class="container admin-container">
+            <div id="loginPage" class="page active">
+                <h1>Admin Login</h1>
+                <input class="input" type="text" id="username" placeholder="Username" maxlength="50">
+                <br>
+                <input class="input" type="password" id="password" placeholder="Password" maxlength="100">
+                <br>
+                <button class="button" onclick="adminLogin()">Login</button>
+                <div id="loginMessage" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div id="adminPanel" class="page">
+                <h1>Admin Panel</h1>
+                <button class="btn-flip" onclick="logout()" data-back="Are You Sure?" data-front="Log Out"></button>
+                
+                <div class="admin-sections">
+                    <div>
+                        <h2>Add New Staff</h2>
+                        <input type="text" id="staffName" placeholder="Staff Name" maxlength="100">
+                        <input type="text" id="staffNFC" placeholder="NFC Serial Number" maxlength="50">
+                        <button onclick="addStaff()">Add Staff</button>
+                        <div id="addStaffMessage" style="margin-top: 10px;"></div>
+                    </div>
+                    
+                    <div>
+                        <h2>Staff History</h2>
+                        <input type="text" id="searchStaff" placeholder="Search by Name or NFC" maxlength="100">
+                        <button onclick="searchHistory()">Search</button>
+                        
+<button onclick="showAllHistory()">Show All</button>
+<button onclick="hideAllHistory()">Hide All</button>
+<div style="margin-top: 10px;">
+    <label>From: <input type="date" id="fromDate"></label>
+    <label>To: <input type="date" id="toDate"></label>
+    <button onclick="filterByDate()">Filter</button>
+    <button onclick="exportToCSV()">Export CSV</button>
+    <button onclick="exportToPDF()">Export PDF</button>
+</div>
+
+                       <div id="historyOutput" style="opacity: 1; transition: opacity 0.5s ease;"></div>
+                    </div>
+                    
+                    <div>
+                        <h2>Manage Account</h2>
+                        <button class="btn-flip" onclick="showPasswordChange()" data-back="Go" data-front="Change Password"></button>
+                        
+                        <div id="passwordChangeSection" style="display: none; margin-top: 20px;">
+                            <h3>Change Password</h3>
+                            <input class="input" type="password" id="currentPassword" placeholder="Current Password" maxlength="100">
+                            <br>
+                            <input class="input" type="password" id="newPassword" placeholder="New Password (min 6 chars)" maxlength="100">
+                            <br>
+                            <input class="input" type="password" id="confirmNewPassword" placeholder="Confirm New Password" maxlength="100">
+                            <br>
+                            <button class="button" onclick="changePassword()">Change Password</button>
+                            <button class="button" onclick="cancelPasswordChange()">Cancel</button>
+                            <div id="passwordChangeMessage" style="margin-top: 10px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sanitize input to prevent XSS
+        function sanitizeInput(input) {
+            if (typeof input !== 'string') return '';
+            return input.replace(/[<>'"&]/g, function(match) {
+                switch (match) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '"': return '&quot;';
+                    case "'": return '&#x27;';
+                    case '&': return '&amp;';
+                    default: return match;
+                }
+            });
+        }
+
+        // Admin login function
+        function adminLogin() {
+            const username = sanitizeInput(document.getElementById("username").value.trim());
+            const password = document.getElementById("password").value;
+            const message = document.getElementById("loginMessage");
+            
+            if (!username || !password) {
+                message.textContent = "Please enter both username and password";
+                message.style.color = "red";
+                return;
+            }
+            
+            const storedPassword = localStorage.getItem("adminPassword") || "admin123";
+            
+            if (username === "admin" && password === storedPassword) {
+                document.getElementById("loginPage").classList.remove("active");
+                document.getElementById("adminPanel").classList.add("active");
+                // Clear login form
+                document.getElementById("username").value = "";
+                document.getElementById("password").value = "";
+                message.textContent = "";
+            } else {
+                message.textContent = "Invalid credentials";
+                message.style.color = "red";
+            }
+        }
+
+        // Logout function
+        function logout() {
+            document.getElementById("adminPanel").classList.remove("active");
+            document.getElementById("loginPage").classList.add("active");
+            // Hide password change section
+            document.getElementById("passwordChangeSection").style.display = "none";
+        }
+
+        // Add staff function
+        function addStaff() {
+            const name = sanitizeInput(document.getElementById("staffName").value.trim());
+            const nfc = sanitizeInput(document.getElementById("staffNFC").value.trim());
+            const message = document.getElementById("addStaffMessage");
+            
+            if (!name || !nfc) {
+                message.textContent = "Please fill all fields";
+                message.style.color = "red";
+                return;
+            }
+            
+            let staffData = JSON.parse(localStorage.getItem("staffData")) || {};
+            
+            // Check if NFC already exists
+            for (let id in staffData) {
+                if (staffData[id].nfc === nfc) {
+                    message.textContent = "NFC serial already exists";
+                    message.style.color = "red";
+                    return;
+                }
+            }
+            
+            const staffId = Date.now().toString();
+            staffData[staffId] = { name, nfc };
+            localStorage.setItem("staffData", JSON.stringify(staffData));
+            
+            message.textContent = "Staff added successfully";
+            message.style.color = "green";
+            
+            // Clear form
+            document.getElementById("staffName").value = "";
+            document.getElementById("staffNFC").value = "";
+        }
+
+        // Search history function
+        function searchHistory() {
+            const search = sanitizeInput(document.getElementById("searchStaff").value.trim().toLowerCase());
+            const output = document.getElementById("historyOutput");
+            
+            if (!search) {
+                output.innerHTML = "<p style='color: red;'>Please enter a search term</p>";
+                return;
+            }
+            
+            const staffData = JSON.parse(localStorage.getItem("staffData")) || {};
+            const clockHistory = JSON.parse(localStorage.getItem("clockHistory")) || {};
+            
+            let results = [];
+            
+            for (let id in staffData) {
+                const staff = staffData[id];
+                if (staff.name.toLowerCase().includes(search) || staff.nfc.toLowerCase().includes(search)) {
+                    results.push({ id, staff, history: clockHistory[id] || [] });
+                }
+            }
+            
+            displayResults(results, output);
+        }
+
+        // Show all history
+        function showAllHistory() {
+            const output = document.getElementById("historyOutput");
+            const staffData = JSON.parse(localStorage.getItem("staffData")) || {};
+            const clockHistory = JSON.parse(localStorage.getItem("clockHistory")) || {};
+            
+            let results = [];
+            
+            for (let id in staffData) {
+                let history = (clockHistory[id] || []).sort((a, b) => new Date(b.clockIn) - new Date(a.clockIn));
+                results.push({ id, staff: staffData[id], history });
+            }
+            
+            displayResults(results, output);
+        }
+
+        
+  // Display search results
+function displayResults(results, output) {
+    if (results.length === 0) {
+        output.innerHTML = "<p style='color: orange;'>No results found</p>";
+        return;
+    }
+
+    let html = "";
+    results.forEach(result => {
+        if (result.history.length === 0) return;
+
+        html += `<div style="margin-bottom: 30px; padding: 10px; border: 1px solid #ccc;">`;
+        html += `<h3>${sanitizeInput(result.staff.name)} (NFC: ${sanitizeInput(result.staff.nfc)})</h3>`;
+
+        html += `<table class="table table-bordered table-sm" style="margin-top: 10px;">`;
+        html += `<thead class="thead-dark"><tr><th>Date</th><th>Clock In</th><th>Clock Out</th></tr></thead>`;
+        html += `<tbody>`;
+
+        result.history.forEach(entry => {
+            let clockIn = sanitizeInput(entry.clockIn);
+            let clockOut = sanitizeInput(entry.clockOut || "Still clocked in");
+            let date = new Date(clockIn).toLocaleDateString();
+
+            html += `<tr>`;
+            html += `<td>${date}</td>`;
+            html += `<td>${clockIn}</td>`;
+            html += `<td>${clockOut}</td>`;
+            html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+    });
+
+    output.innerHTML = html;
+}
+
+
+        // Show password change section
+        function showPasswordChange() {
+            document.getElementById("passwordChangeSection").style.display = "block";
+        }
+
+        // Cancel password change
+        function cancelPasswordChange() {
+            document.getElementById("passwordChangeSection").style.display = "none";
+            document.getElementById("currentPassword").value = "";
+            document.getElementById("newPassword").value = "";
+            document.getElementById("confirmNewPassword").value = "";
+            document.getElementById("passwordChangeMessage").textContent = "";
+        }
+
+        // Change password function
+        function changePassword() {
+            const currentPassword = document.getElementById("currentPassword").value;
+            const newPassword = document.getElementById("newPassword").value;
+            const confirmNewPassword = document.getElementById("confirmNewPassword").value;
+            const message = document.getElementById("passwordChangeMessage");
+            const storedPassword = localStorage.getItem("adminPassword") || "admin123";
+
+            // Validate current password
+            if (currentPassword !== storedPassword) {
+                message.textContent = "Current password is incorrect";
+                message.style.color = "red";
+                return;
+            }
+
+            // Check if new password and confirmation match
+            if (newPassword !== confirmNewPassword) {
+                message.textContent = "New password and confirmation do not match";
+                message.style.color = "red";
+                return;
+            }
+
+            // Validate new password
+            if (newPassword.length < 6) {
+                message.textContent = "New password must be at least 6 characters long";
+                message.style.color = "red";
+                return;
+            }
+
+            // Update password
+            localStorage.setItem("adminPassword", newPassword);
+            message.textContent = "Password changed successfully!";
+            message.style.color = "green";
+            
+            // Clear fields
+            document.getElementById("currentPassword").value = "";
+            document.getElementById("newPassword").value = "";
+            document.getElementById("confirmNewPassword").value = "";
+        }
+
+        // Allow Enter key to submit login
+        document.getElementById("password").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                adminLogin();
+            }
+        });
+    </script>
+
+<!-- Extra JS for Export, Filter, Sort -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+function filterByDate() {
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+    const staffData = JSON.parse(localStorage.getItem("staffData")) || {};
+    const clockHistory = JSON.parse(localStorage.getItem("clockHistory")) || {};
+    const output = document.getElementById("historyOutput");
+    let results = [];
+
+    for (let id in staffData) {
+        let filteredHistory = (clockHistory[id] || []).filter(entry => {
+            let clockInDate = new Date(entry.clockIn).toISOString().slice(0, 10);
+            return (!fromDate || clockInDate >= fromDate) && (!toDate || clockInDate <= toDate);
+        });
+
+        if (filteredHistory.length > 0) {
+            results.push({
+                id,
+                staff: staffData[id],
+                history: filteredHistory.sort((a, b) => new Date(b.clockIn) - new Date(a.clockIn))
+            });
+        }
+    }
+
+    displayResults(results, output);
+}
+
+function exportToCSV() {
+    const staffData = JSON.parse(localStorage.getItem("staffData")) || {};
+    const clockHistory = JSON.parse(localStorage.getItem("clockHistory")) || {};
+    let csv = "Name,NFC,Clock In,Clock Out\n";
+
+    for (let id in staffData) {
+        const { name, nfc } = staffData[id];
+        (clockHistory[id] || []).forEach(entry => {
+            csv += `"${name}","${nfc}","${entry.clockIn}","${entry.clockOut || 'Still clocked in'}"\n`;
+        });
+    }
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "clockin_history.csv";
+    link.click();
+}
+
+async function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const staffData = JSON.parse(localStorage.getItem("staffData")) || {};
+    const clockHistory = JSON.parse(localStorage.getItem("clockHistory")) || {};
+
+    let y = 10;
+    doc.setFontSize(14);
+    doc.text("Clock-In History", 10, y);
+    y += 10;
+
+    for (let id in staffData) {
+        const { name, nfc } = staffData[id];
+        const entries = (clockHistory[id] || []).sort((a, b) => new Date(b.clockIn) - new Date(a.clockIn));
+
+        if (entries.length === 0) continue;
+
+        doc.setFontSize(12);
+        doc.text(`${name} (NFC: ${nfc})`, 10, y);
+        y += 8;
+
+        entries.forEach(entry => {
+            let line = `Clock In: ${entry.clockIn} | Clock Out: ${entry.clockOut || 'Still clocked in'}`;
+            doc.setFontSize(10);
+            doc.text(line, 12, y);
+            y += 6;
+            if (y > 280) {
+                doc.addPage();
+                y = 10;
+            }
+        });
+
+        y += 6;
+    }
+
+    doc.save("clockin_history.pdf");
+}
+</script>
+
+</body>
+<footer class="bottom">
+    <p>Copy Right &copy; M.K.F LTD 2025</p>
+</footer>
+</html>

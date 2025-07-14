@@ -1,0 +1,156 @@
+@import 'https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300';
+
+html,
+ 
+.box-1 { background-color: white; }
+
+.btn {
+  line-height: 50px;
+  height: 50px;
+  text-align: center;
+  width: 250px;
+  cursor: pointer;
+}
+.btn-two {
+  color: #000000;
+  transition: all 0.3s;
+  position: relative;
+}
+.btn-two span {
+  transition: all 0.3s;
+}
+.btn-two::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  transition: all 0.3s;
+  border-top-width: 1px;
+  border-bottom-width: 1px;
+  border-top-style: solid;
+  border-bottom-style: solid;
+  border-top-color: rgba(0, 0, 0, 0.5);
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+  transform: scale(0.1, 1);
+}
+.btn-two:hover span {
+  letter-spacing: 2px;
+}
+.btn-two:hover::before {
+  opacity: 1;
+  transform: scale(1, 1);
+}
+.btn-two::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  transition: all 0.3s;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.btn-two:hover::after {
+  opacity: 0;
+  transform: scale(0.1, 1);
+}
+
+@import url('https://fonts.googleapis.com/css?family=Lato:100&display=swap');
+
+.center {
+  width: 180px;
+  height: 60px;
+  position: absolute;
+}
+
+.button {
+  width: 180px;
+  height: 60px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #000000;
+  outline: none;
+  transition: 1s ease-in-out;
+}
+
+svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  fill: none;
+  stroke: #fff;
+  stroke-dasharray: 150 480;
+  stroke-dashoffset: 150;
+  transition: 1s ease-in-out;
+}
+
+.button:hover {
+  transition: 1s ease-in-out;
+  background: #d8da4f;
+}
+
+.btn:hover svg {
+  stroke-dashoffset: -480;
+}
+
+.button span {
+  color: white;
+  font-size: 18px;
+  font-weight: 100;
+}
+
+
+.btn-flip {
+    opacity: 1;
+    outline: 0;
+    color: #fff;
+    line-height: 40px;
+    position: relative;
+    text-align: center;
+    letter-spacing: 1px;
+    display: inline-block;
+    text-decoration: none;
+    font-family: 'Open Sans';
+    text-transform: uppercase;
+}
+.btn-flip:hover:after {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+}
+.btn-flip:hover:before {
+    opacity: 0;
+    transform: translateY(50%) rotateX(90deg);
+}
+.btn-flip:after {
+    top: 0;
+    left: 0;
+    opacity: 0;
+    width: 100%;
+    color: #323237;
+    display: block;
+    transition: 0.5s;
+    position: absolute;
+    background: #adadaf;
+    content: attr(data-back);
+    transform: translateY(-50%) rotateX(90deg);
+}
+.btn-flip:before {
+    top: 0;
+    left: 0;
+    opacity: 1;
+    color: #adadaf;
+    display: block;
+    padding: 0 30px;
+    line-height: 40px;
+    transition: 0.5s;
+    position: relative;
+    background: #323237;
+    content: attr(data-front);
+    transform: translateY(0) rotateX(0);
+}
+
